@@ -3,20 +3,16 @@ const router = express.Router();
 const userService = require('../services/userService');
 
 // Get all users
-router.get('/', (req, res) => {
-    const users = userService.getAll();
+router.get('/', async (req, res) => {
+    const users = await userService.getAll();
     res.send(users);
 })
 
 // Get a specific user
-router.get('/:email', (req, res) => { // user/shahar@gmail.com
-    const { email } = req.params;
-    const user = userService.getUser(email);
-    if (!user) {
-        res.status(404).send();
-    } else {
-        res.send(user);
-    }
+router.get('/:id', async (req, res) => { // user/shahar@gmail.com
+    const { id } = req.params;
+    const user = await userService.getUser(id);
+    res.send(user);
 })
 
 // Create a user
@@ -36,18 +32,18 @@ router.post('/', (req, res) => { // add a user
 })
 
 // Delete a user
-router.delete('/:email', (req, res) => {
-    const { email } = req.params;
-    userService.deleteUser(email);
-    res.send();
+router.delete('/:id', async (req, res) => {
+    const { id } = req.params;
+    await userService.deleteUser(id);
+    res.send('deleted successfully');
 })
 
 // Update a user
-router.put('/:email', (req, res) => {
+router.put('/:id', async (req, res) => {
     const toUpdate = req.body;
     console.log(req.body)
-    const { email } = req.params;
-    const updatedUser = userService.update(email, toUpdate);
+    const { id } = req.params;
+    const updatedUser = await userService.update(id, toUpdate);
     console.log(updatedUser)
     if (updatedUser) {
         res.send(updatedUser);

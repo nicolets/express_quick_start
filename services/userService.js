@@ -1,61 +1,47 @@
 const fs = require('fs');
+const { usersCollection } = require('../db');
+const ObjectId = require('mongodb').ObjectId;
 
 /*
     given an interface of user (from above) make the following functions:
     add, delete, get, update
 */
 
-function getUsers() {
-    return require('../db/users.json');
-}
-
-function setUsers(users) {
-    fs.writeFileSync("./db/users.json", JSON.stringify(users));
-}
-
-function add(user) {
-    const foundUser = getUser(user.email);
-    const users = getUsers();
-    if (!foundUser) {
+async function add(user) {
+    const existingUser = await usersCollection().findOne({email: user.email});
+    if (existingUser) {
+        return false;
+    } else {
         const newUser = {
             name: user.name,
             email: user.email,
             password: user.password
         }
-        users.push(newUser);
-        setUsers(users);
-        return true;
+        usersCollection().insertOne(newUser);
     }
-    return false;
 }
 
-function getUser(email) {
-    const users = getUsers();
-    const foundUser = users.find(existingUser => existingUser.email === email);
-    return foundUser;
+async function getUser(oid) {
+    return await usersCollection().findOne({"_id": ObjectId(oid)});
 }
 
-function deleteUser(email) {
-    const users = getUsers();
-    const filteredUsers = users.filter(existingUser => existingUser.email !== email);
-    setUsers(filteredUsers);
+async function deleteUser(oid) { 
+    return await usersCollection().deleteOne({"_id": ObjectId(oid)})
 }
 
-function update(email, data) {
-    const users = getUsers();
-    const foundUser = users.find(existingUser => existingUser.email === email);
+async function update(oid, data) { //updateOne({ a: 3 }, { $set: { b: 1 } })
+    const foundUser = getUser(oid);
     if (!foundUser) return false;
     Object.keys(foundUser).forEach(key => {
         if (data[key]) {
             foundUser[key] = data[key];
         }
     });
-    setUsers(users);
-    return foundUser;
+    return await usersCollection.updateOne({"_id": ObjectId(oid)}, {$set: {key: data});
 }
 
-function getAll() {
-    return getUsers();
+async function getAll() {
+    return await usersCollection().find({}).toArray();
 }
 
 module.exports = {
